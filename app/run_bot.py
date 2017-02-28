@@ -15,6 +15,7 @@ from docopt import docopt
 from PIL import Image
 from io import BytesIO
 
+import datetime
 import os
 import requests
 import settings
@@ -26,6 +27,7 @@ from urllib import request
 
 bot = telebot.TeleBot(settings.API_TOKEN)
 img_counter = 0
+users = dict()
 
 
 @bot.message_handler(commands=['start', 'help'])
@@ -51,7 +53,12 @@ def handle_doc(message):
         with open(file_path, 'wb') as file:
             file.write(img)
 
-        bot.send_message(message.chat.id, settings.THANKS_MESSAGE)
+        chat_id = message.chat.id
+        last_message = users.get(chat_id)
+        if last_message is None or last_message < datetime.datetime.now() - datetime.timedelta(minutes=1):
+            users[chat_id] = datetime.datetime.now()
+            bot.send_message(message.chat.id, settings.THANKS_MESSAGE)
+
         img_counter += 1
         print('Image №:', img_counter, 'downloaded.')
     except:
